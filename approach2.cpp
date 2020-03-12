@@ -7,10 +7,10 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <algorithm>
-#include <opencv2/opencv.hpp>
+// #include <opencv2/opencv.hpp>
 
 using namespace std;
-using namespace cv;
+// using namespace cv;
 
 void sortArr(float arr[], int n, vector<float> &vcost, vector<int> &vcost_list) 
 { 
@@ -76,7 +76,7 @@ void getVcost(vector <int> &nodes, vector <float> &vcost, int **vlist){
 
     for (auto &image_name : cam1Images) {
         cout << "\nLoad image : " << image_name << endl;
-        Mat image = imread(cam1ImagePath + image_name);
+        // Mat image = imread(baseImagePath + image_name);
         
     }
 
@@ -448,20 +448,11 @@ int main(void){
         for(int j=0; j<count; j++){
             if(label[j] == 1 && j != i){
                 if(graph[vlist[i][0]][vlist[j][0]] == 1){
-                    // nodeTemp[node_index][0] = vlist[j][1];
-                    // nodeTemp[node_index][1] = vlist[j][2];
-                    // nodeTemp[node_index][2] = vcost[j];
-                    // node_index ++;
                     nodeTemp.push_back(vlist[j][1]);
                     nodeTemp.push_back(vlist[j][2]);
                     nodeTemp.push_back(vcost[j]);
 
-                    // edgeTemp[edge_index][0] = vlist[i][1];
-                    // edgeTemp[edge_index][1] = vlist[i][2];
-                    // edgeTemp[edge_index][2] = vlist[j][1];
-                    // edgeTemp[edge_index][3] = vlist[j][2];
-                    // edgeTemp[edge_index][4] = ecost[vlist[i][0]][vlist[j][0]];
-                    // edge_index ++;
+
                     edgeTemp.push_back(vlist[i][1]);
                     edgeTemp.push_back(vlist[i][2]);
                     edgeTemp.push_back(vlist[j][1]);
@@ -478,59 +469,59 @@ int main(void){
             }
         }
         
-        int labels = nodeTemp.size()/3;
-        if(labels > maxLabel){
-            maxLabel = labels;
-            float nodeCost = 0;
-            float edgeCost = 0;
+        // int labels = nodeTemp.size()/3;
+        // if(labels > maxLabel){
+        //     maxLabel = labels;
+        //     float nodeCost = 0;
+        //     float edgeCost = 0;
 
-            for(int j=0; j<nodeTemp.size()/3; j=j+3){
-                nodeCost += nodeTemp[j+2];
+        //     for(int j=0; j<nodeTemp.size()/3; j=j+3){
+        //         nodeCost += nodeTemp[j+2];
 
-            }
-            for(int j=0; j<edgeTemp.size()/5; j=j+5){
-                edgeCost += nodeTemp[j+4];
-            }
+        //     }
+        //     for(int j=0; j<edgeTemp.size()/5; j=j+5){
+        //         edgeCost += nodeTemp[j+4];
+        //     }
 
-            float cost = nodeCost; 
+        //     float cost = nodeCost; 
 
-            if(cost <= maxCost){
-                maxCost = cost;
-                nodeUse = nodeTemp;
-                edgeUse = edgeTemp;
-                break;
-            }    
-        }else if(labels == maxLabel){
-            float nodeCost = 0;
-            float edgeCost = 0;
+        //     if(cost <= maxCost){
+        //         maxCost = cost;
+        //         nodeUse = nodeTemp;
+        //         edgeUse = edgeTemp;
+        //         break;
+        //     }    
+        // }else if(labels == maxLabel){
+        //     float nodeCost = 0;
+        //     float edgeCost = 0;
 
-            for(int j=0; j<nodeTemp.size()/3; j=j+3){
-                nodeCost += nodeTemp[j+2];
+        //     for(int j=0; j<nodeTemp.size()/3; j=j+3){
+        //         nodeCost += nodeTemp[j+2];
 
-            }
-            for(int j=0; j<edgeTemp.size()/5; j=j+5){
-                edgeCost += nodeTemp[j+4];
-            }
+        //     }
+        //     for(int j=0; j<edgeTemp.size()/5; j=j+5){
+        //         edgeCost += nodeTemp[j+4];
+        //     }
 
-            float cost = nodeCost; 
+        //     float cost = nodeCost; 
 
-            if(cost <= maxCost){
-                maxCost = cost;
-                nodeUse = nodeTemp;
-                edgeUse = edgeTemp;
-                break;
-            }    
-        }
+        //     if(cost <= maxCost){
+        //         maxCost = cost;
+        //         nodeUse = nodeTemp;
+        //         edgeUse = edgeTemp;
+        //         break;
+        //     }    
+        // }
     }
 
-    for(int i=0; i<nodeUse.size(); i=i+3){
-        cout<<nodeUse[i]<<"<->"<<nodeUse[i+1]<<endl;
-    }
+    // for(int i=0; i<nodeUse.size(); i=i+3){
+    //     cout<<nodeUse[i]<<"<->"<<nodeUse[i+1]<<endl;
+    // }
 
-    delete [] cam1Groups;
-    delete [] cam2Groups;
-    delete [] graph;
-    delete [] conflict;
-    delete [] ecost;
-    delete [] vlist;
+    // delete [] cam1Groups;
+    // delete [] cam2Groups;
+    // delete [] graph;
+    // delete [] conflict;
+    // delete [] ecost;
+    // delete [] vlist;
 }
