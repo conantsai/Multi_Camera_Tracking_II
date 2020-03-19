@@ -12,12 +12,24 @@
 using namespace std;
 using namespace cv;
 
-void sortArr(float arr[], int n, vector<float> &vcost, vector<int> &vcost_list) 
-{ 
+
+// Computes the distance between two std::vectors
+template <typename T>
+double	vectors_distance(const vector<T>& a, const vector<T>& b){
+	vector<double>	auxiliary;
+
+	transform (a.begin(), a.end(), b.begin(), back_inserter(auxiliary),//
+	[](T element1, T element2) {return pow((element1-element2),2);});
+	auxiliary.shrink_to_fit();
+
+	return  sqrt(std::accumulate(auxiliary.begin(), auxiliary.end(), 0.0));
+} // end template vectors_distance
+
+void sortArr(vector<float> &vcost_tmp, int n, vector<float> &vcost, vector<int> &vcost_list){ 
     vector <pair<float, int>> vp; 
 
     for(int i=0; i<n; ++i) { 
-        vp.push_back(make_pair(arr[i], i)); 
+        vp.push_back(make_pair(vcost_tmp[i], i));
     } 
 
     sort(vp.begin(), vp.end()); 
@@ -62,73 +74,96 @@ void ListImages(string const &path, vector<string> &images) {
 
 void getVcost(vector <int> &nodes, vector <float> &vcost, int **vlist){
     int count = nodes.size()/2;
+    vector <float> vcost_tmp;
 
+    for(int i=0; i<count; i++){
+        vcost_tmp.push_back(0);
+    }
     for(int i=0; i<count; i++){
         vcost.push_back(0);
     }
 
-    string cam1ImagePath = "./data/cam1";
-    string cam2ImagePath = "./data/cam1";
-    vector<string> cam1Images, cam2Images;
+    string cam1ImagePath = "./data/cam1/cam1_person";
+    string cam2ImagePath = "./data/cam2/cam2_person";
+    vector <string> cam1Images, cam2Images;
+    vector <int> vnode;
+    int index = 0;
 
-    ListImages(cam1ImagePath, cam1Images);
-    ListImages(cam2ImagePath, cam2Images);
+    for(int i=0; i<nodes.size(); i=i+2){
+        string cam1Path = "data/cam1/cam1_person" + to_string(nodes[i]) + ".png";
+        string cam2Path = "data/cam2/cam2_person" + to_string(nodes[i+1]) + ".png";
 
-    for (auto &image_name : cam1Images) {
-        // cout << "\nLoad image : " << image_name << endl;
-        Mat image = imread(cam1ImagePath + image_name);
-        
+        Mat cam1Image = imread(cam1Path);
+        Mat cam2Image = imread(cam2Path);
+
+        float cam1_feat[1][4][2][4] = {{{{0.1820118,  0.01131729, 0.08673228, 0.04008939},
+                                        {0.09348882, 0.01959437, 0.04942593, 0.04631482}},
+                                       {{0.08874577, 0.0175822,  0.04482096, 0.04295532},
+                                        {0.09784839, 0.01864509, 0.04760801, 0.04495515}},
+                                       {{0.14304025, 0.0206972,  0.07466555, 0.043155  },
+                                        {0.1575067,  0.01871352, 0.08274077, 0.04338045}},
+                                       {{0.20683368, 0.01561823, 0.09829947, 0.03691985},
+                                        {0.17649174, 0.01418823, 0.08741158, 0.04082694}}}};
+
+        float cam2_feat[1][4][2][4] = {{{{0.15523714, 0.01739082, 0.07491373, 0.04018689},
+                                         {0.1804601,  0.01713482, 0.08733648, 0.03940007}},
+                                        {{0.13846312, 0.01735787, 0.06631881, 0.04152053},
+                                         {0.17667529, 0.01680345, 0.0869156,  0.04085378}},
+                                        {{0.14191046, 0.01744963, 0.07034914, 0.03946224},
+                                         {0.17104968, 0.01698326, 0.0827354,  0.03963856}},
+                                        {{0.17638955, 0.01612297, 0.08563288, 0.03762322},
+                                         {0.1606842,  0.01554271, 0.07915629, 0.04017135}}}};
+
+        vector<float> cam1_feat_reshape;
+        for(int m=0; m<1; m++){
+            for(int n=0; n<4; n++){
+                for(int k=0; k<2; k++){
+                    for(int l=0; l<4; l++){
+                        if(cam1_feat[m][n][k][l] < 0){
+                            cam1_feat_reshape.push_back(0);
+                        }else{
+                            cam1_feat_reshape.push_back(cam1_feat[m][n][k][l]);
+                        }
+                    }
+                }
+            }
+        }
+
+        vector<float> cam2_feat_reshape;
+        for(int m=0; m<1; m++){
+            for(int n=0; n<4; n++){
+                for(int k=0; k<2; k++){
+                    for(int l=0; l<4; l++){
+                        if(cam2_feat[m][n][k][l] < 0){
+                            cam2_feat_reshape.push_back(0);
+                        }else{
+                            cam2_feat_reshape.push_back(cam2_feat[m][n][k][l]);
+                        }
+                    }
+                }
+            }
+        }
+
+        float vcost_dist = vectors_distance(cam1_feat_reshape,cam2_feat_reshape);
+        vcost_tmp[index] = vcost_dist;
+        vnode.push_back(i/2);
+        vnode.push_back(nodes[i]);
+        vnode.push_back(nodes[i+1]);
+        index++;
     }
-
-    float tentative_vcost[] = {0.14672285, 0.14381562, 0.1353567,  0.15588763, 0.1463403,  0.16863456,
-                               0.12309646, 0.1492267,  0.16153237, 0.19058863, 0.19089417, 0.11251639,
-                               0.17780377, 0.1390506,  0.17028903, 0.1982498,  0.16413768, 0.22393119,
-                               0.17677382, 0.24722998, 0.1929111,  0.22624995, 0.17198621, 0.23883565,
-                               0.1960639,  0.2052911,  0.19811215, 0.16283216, 0.19804346, 0.2930768,
-                               0.16826582, 0.19232088, 0.16800533, 0.17103117, 0.15392985, 0.16536156,
-                               0.19001316, 0.18959997, 0.14417996, 0.25718294, 0.12243394, 0.1684318,
-                               0.11499672, 0.17252813, 0.11693792, 0.12893153, 0.11575986, 0.1038857,
-                               0.13509445, 0.16153058, 0.12470854, 0.15559669, 0.11962353, 0.16137322,
-                               0.11978564, 0.14310523, 0.13311321, 0.13796748, 0.13607022, 0.21747227,
-                               0.11271337, 0.14652318, 0.09649291, 0.12892737, 0.08773395, 0.13880596,
-                               0.08227954, 0.13716899, 0.12763583, 0.17191024, 0.11489494, 0.18343618,
-                               0.12447174, 0.16594496, 0.12711261, 0.14744289, 0.11944002, 0.15913079,
-                               0.15994335, 0.20145054, 0.15634393, 0.15267796, 0.10948647, 0.14226468,
-                               0.11392029, 0.17561714, 0.10140082, 0.13587547, 0.13907204, 0.23905422,
-                               0.1617939,  0.14714501, 0.17126164, 0.16425205, 0.17148408, 0.1435445,
-                               0.18630033, 0.17106136, 0.16114138, 0.25820304};
-
-    int tentative_vnode[100][3] = {{0, 0, 10}, {1, 0, 11}, {2, 0, 12}, {3, 0, 13}, {4, 0, 14}, {5, 0, 15}, 
-                          {6, 0, 16}, {7, 0, 17}, {8, 0, 18}, {9, 0, 19}, {10, 1, 10}, {11, 1, 11}, 
-                          {12, 1, 12}, {13, 1, 13}, {14, 1, 14}, {15, 1, 15}, {16, 1, 16}, {17, 1, 17}, 
-                          {18, 1, 18}, {19, 1, 19}, {20, 2, 10}, {21, 2, 11}, {22, 2, 12}, {23, 2, 13}, 
-                          {24, 2, 14}, {25, 2, 15}, {26, 2, 16}, {27, 2, 17}, {28, 2, 18}, {29, 2, 19}, 
-                          {30, 3, 10}, {31, 3, 11}, {32, 3, 12}, {33, 3, 13}, {34, 3, 14}, {35, 3, 15}, 
-                          {36, 3, 16}, {37, 3, 17}, {38, 3, 18}, {39, 3, 19}, {40, 4, 10}, {41, 4, 11}, 
-                          {42, 4, 12}, {43, 4, 13}, {44, 4, 14}, {45, 4, 15}, {46, 4, 16}, {47, 4, 17}, 
-                          {48, 4, 18}, {49, 4, 19}, {50, 5, 10}, {51, 5, 11}, {52, 5, 12}, {53, 5, 13}, 
-                          {54, 5, 14}, {55, 5, 15}, {56, 5, 16}, {57, 5, 17}, {58, 5, 18}, {59, 5, 19}, 
-                          {60, 6, 10}, {61, 6, 11}, {62, 6, 12}, {63, 6, 13}, {64, 6, 14}, {65, 6, 15}, 
-                          {66, 6, 16}, {67, 6, 17}, {68, 6, 18}, {69, 6, 19}, {70, 7, 10}, {71, 7, 11}, 
-                          {72, 7, 12}, {73, 7, 13}, {74, 7, 14}, {75, 7, 15}, {76, 7, 16}, {77, 7, 17}, 
-                          {78, 7, 18}, {79, 7, 19}, {80, 8, 10}, {81, 8, 11}, {82, 8, 12}, {83, 8, 13}, 
-                          {84, 8, 14}, {85, 8, 15}, {86, 8, 16}, {87, 8, 17}, {88, 8, 18}, {89, 8, 19}, 
-                          {90, 9, 10}, {91, 9, 11}, {92, 9, 12}, {93, 9, 13}, {94, 9, 14}, {95, 9, 15}, 
-                          {96, 9, 16}, {97, 9, 17}, {98, 9, 18}, {99, 9, 19}};
-    // vcost.assign(vcost1, vcost1+100);
-    // sort(vcost.begin(), vcost.end()); 
-    // sort(tentative_vcost, tentative_vcost+100); 
 
     vector <int> vcost_list;
-    int vcost_n = sizeof(tentative_vcost) / sizeof(tentative_vcost[0]); 
-    cout<<vcost_n<<endl;
-    sortArr(tentative_vcost, vcost_n, vcost, vcost_list); 
-                       
+    int vcost_n = vcost_tmp.size(); 
+    sortArr(vcost_tmp, vcost_n, vcost, vcost_list);
+
+
+    // cout<<vcost.size();
+
     for(int i=0; i<count; i++){
         for(int j=0; j<3; j++){
-            vlist[i][j] = tentative_vnode[vcost_list[i]][j];
+            vlist[i][j] = vnode[vcost_list[i]*3+j];
         }
-    }
+    }   
 }
 
 void getEcost(int **graph, vector <int> &nodes, vector <int> &nodes_datetime, float **ecost){
